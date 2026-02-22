@@ -5,28 +5,89 @@ from __future__ import annotations
 import pandas as pd
 
 
+_CROSS_SECTIONAL_THRESHOLD = 3.0
+_ROBUST_SCALE_FACTOR = 0.6745
+
+
+def _validate_panel(panel: pd.DataFrame) -> None:
+    if not isinstance(panel.index, pd.MultiIndex) or panel.index.nlevels < 2:
+        raise ValueError("panel must be indexed by a (cik, period) MultiIndex")
+
+
+def _ensure_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    return df[columns].apply(pd.to_numeric, errors="coerce")
+
+
+def build_cross_sectional_z_anomaly(
+    panel: pd.DataFrame,
+    columns: tuple[str, ...] | list[str],
+    threshold: float = _CROSS_SECTIONAL_THRESHOLD,
+    magnitude_col: str = "cross_sectional_z_anomaly_magnitude",
+    flag_col: str = "is_cross_sectional_z_anomaly",
+) -> pd.DataFrame:
+    """Build cross-sectional anomaly magnitude and flag using per-period z-scores."""
+
+    _validate_panel(panel)
+    result = panel.copy()
+    available = [column for column in columns if column in result.columns]
+    if not available:
+        result[magnitude_col] = 0.0
+        result[flag_col] = False
+        return result
+
+    values = _ensure_numeric(result, available)
+    period_mean = values.groupby(level=1).transform("mean")
+    period_std = values.groupby(level=1).transform(lambda s: s.std(ddof=0)).replace(0.0, pd.NA)
+    z_scores = ((values - period_mean) / period_std).fillna(0.0)
+
+    abs_z = z_scores.abs()
+    result[magnitude_col] = abs_z.max(axis=1)
+    result[flag_col] = abs_z.gt(float(threshold)).any(axis=1)
+    return result
+
+
+def build_robust_mad_anomaly(
+    panel: pd.DataFrame,
+    columns: tuple[str, ...] | list[str],
+    threshold: float = _CROSS_SECTIONAL_THRESHOLD,
+    magnitude_col: str = "robust_mad_anomaly_magnitude",
+    flag_col: str = "is_robust_mad_anomaly",
+) -> pd.DataFrame:
+    """Build robust anomaly magnitude and flag using per-period median/MAD scores."""
+
+    _validate_panel(panel)
+    result = panel.copy()
+    available = [column for column in columns if column in result.columns]
+    if not available:
+        result[magnitude_col] = 0.0
+        result[flag_col] = False
+        return result
+
+    values = _ensure_numeric(result, available)
+    period_median = values.groupby(level=1).transform("median")
+    abs_dev = (values - period_median).abs()
+    period_mad = abs_dev.groupby(level=1).transform("median").replace(0.0, pd.NA)
+    robust_scores = ((_ROBUST_SCALE_FACTOR * (values - period_median)) / period_mad).fillna(0.0)
+
+    abs_robust = robust_scores.abs()
+    result[magnitude_col] = abs_robust.max(axis=1)
+    result[flag_col] = abs_robust.gt(float(threshold)).any(axis=1)
+    return result
+
+
 def flag_statistical_outliers(
     panel: pd.DataFrame,
     columns: tuple[str, ...],
     z_threshold: float = 3.0,
     output_col: str = "is_statistical_outlier",
 ) -> pd.DataFrame:
-    """Flag row-level outliers using cross-sectional z-scores.
+    """Backward-compatible wrapper for cross-sectional z anomaly flags."""
 
-    For each selected column, computes z-scores over the full panel and flags a
-    row if any absolute z-score exceeds ``z_threshold``.
-
-    Missing columns are ignored gracefully.
-    """
-
-    result = panel.copy()
-    available = [c for c in columns if c in result.columns]
-    if not available:
-        result[output_col] = False
-        return result
-
-    z = result[available].apply(
-        lambda s: (s - s.mean()) / (s.std(ddof=0) if s.std(ddof=0) else 1.0)
+    result = build_cross_sectional_z_anomaly(
+        panel,
+        columns=columns,
+        threshold=z_threshold,
+        magnitude_col="statistical_outlier_magnitude",
+        flag_col=output_col,
     )
-    result[output_col] = z.abs().gt(z_threshold).any(axis=1)
     return result
