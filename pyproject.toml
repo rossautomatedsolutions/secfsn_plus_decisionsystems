@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secfsn_plus_decisionsystems"
+version = "0.1.0"
+description = "Layer 3B deterministic scoring, anomaly detection, and decision logic."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pandas>=2.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["secfsn_plus_decisionsystems*"]
