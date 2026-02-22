@@ -17,6 +17,7 @@ class HybridRiskConfig:
     structural_weight: float = 0.5
     fraud_weight: float = 0.5
     model_drawdown_weight: float = 0.0
+    anomaly_weight: float = 0.0
     use_percentile: bool = False
     high_risk_threshold: float | None = None
     medium_risk_threshold: float | None = None
@@ -27,6 +28,11 @@ class HybridRiskConfig:
     percentile_col: str = "hybrid_risk_percentile"
     high_flag_col: str = "is_high_risk"
     medium_flag_col: str = "is_medium_risk"
+    anomaly_magnitude_cols: tuple[str, ...] = (
+        "cross_sectional_z_anomaly_magnitude",
+        "robust_mad_anomaly_magnitude",
+        "rolling_instability_magnitude",
+    )
 
 
 def build_hybrid_risk_score(
@@ -53,6 +59,13 @@ def build_hybrid_risk_score(
         components.append(cfg.model_drawdown_col)
         component_weights[cfg.model_drawdown_col] = cfg.model_drawdown_weight
 
+    available_anomaly_cols = [column for column in cfg.anomaly_magnitude_cols if column in result.columns]
+    if available_anomaly_cols and cfg.anomaly_weight != 0.0:
+        anomaly_blend_col = "_anomaly_blend_component"
+        result[anomaly_blend_col] = result[available_anomaly_cols].fillna(0.0).mean(axis=1)
+        components.append(anomaly_blend_col)
+        component_weights[anomaly_blend_col] = cfg.anomaly_weight
+
     if not components:
         result[cfg.hybrid_col] = 0.0
     else:
@@ -60,6 +73,9 @@ def build_hybrid_risk_score(
         numerator = result[components].fillna(0.0).mul(weight_series, axis=1).sum(axis=1)
         denominator = float(weight_series.abs().sum()) or 1.0
         result[cfg.hybrid_col] = numerator / denominator
+
+    if "_anomaly_blend_component" in result.columns:
+        result = result.drop(columns=["_anomaly_blend_component"])
 
     if cfg.use_percentile:
         result[cfg.percentile_col] = result[cfg.hybrid_col].rank(method="average", pct=True)
