@@ -5,6 +5,12 @@ from __future__ import annotations
 import pandas as pd
 
 
+def _clamp_weight(weight: float) -> float:
+    """Clamp blend weights into [0, 1] for deterministic composition."""
+
+    return min(1.0, max(0.0, float(weight)))
+
+
 def build_hybrid_risk_score(
     panel: pd.DataFrame,
     structural_col: str = "structural_risk_score",
@@ -33,12 +39,13 @@ def build_hybrid_risk_score(
     else:
         base_score = pd.Series(0.0, index=result.index)
 
+    weight = _clamp_weight(anomaly_weight)
     available_anomaly_cols = [c for c in anomaly_cols if c in result.columns]
-    if available_anomaly_cols:
+    if available_anomaly_cols and weight > 0.0:
         anomaly_magnitude = (
             result[available_anomaly_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).mean(axis=1)
         )
-        result[output_col] = ((1.0 - anomaly_weight) * base_score) + (anomaly_weight * anomaly_magnitude)
+        result[output_col] = ((1.0 - weight) * base_score) + (weight * anomaly_magnitude)
     else:
         result[output_col] = base_score
 
