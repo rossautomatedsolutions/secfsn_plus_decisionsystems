@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+
 import pandas as pd
 
 FRAUD_FEATURE_WEIGHTS: dict[str, float] = {
@@ -40,10 +42,20 @@ def compute_fraud_proxy_score(
     feature_weights: dict[str, float] | None = None,
     output_col: str = "fraud_proxy_score",
 ) -> pd.DataFrame:
-    """Backward-compatible alias for :func:`build_fraud_proxy_score`."""
+    """Backward-compatible alias for :func:`build_fraud_proxy_score`.
+
+    The historic second positional argument accepted ``proxy_columns`` (e.g.
+    ``("accrual_intensity", "non_cash_earnings_ratio")``). Preserve that
+    behavior by translating column names into equal-weight feature weights.
+    """
+
+    resolved_feature_weights = feature_weights
+    if feature_weights is not None and not isinstance(feature_weights, Mapping):
+        if isinstance(feature_weights, Sequence) and not isinstance(feature_weights, str):
+            resolved_feature_weights = {column: 1.0 for column in feature_weights}
 
     return build_fraud_proxy_score(
         panel=panel,
-        feature_weights=feature_weights,
+        feature_weights=resolved_feature_weights,
         output_col=output_col,
     )
