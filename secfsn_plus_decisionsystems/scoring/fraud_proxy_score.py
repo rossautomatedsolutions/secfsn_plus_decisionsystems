@@ -4,31 +4,46 @@ from __future__ import annotations
 
 import pandas as pd
 
+FRAUD_FEATURE_WEIGHTS: dict[str, float] = {
+    "accrual_intensity": 1.0,
+    "asset_revenue_growth_mismatch_scaled": 1.0,
+    "non_cash_earnings_ratio": 1.0,
+    "retained_earnings_gap_proxy_scaled": 1.0,
+}
 
-def compute_fraud_proxy_score(
+
+def build_fraud_proxy_score(
     panel: pd.DataFrame,
-    proxy_columns: tuple[str, ...] = ("accruals_signal", "restatement_signal"),
+    feature_weights: dict[str, float] | None = None,
     output_col: str = "fraud_proxy_score",
 ) -> pd.DataFrame:
-    """Compute a simple deterministic fraud-proxy score.
-
-    Available proxy columns are averaged row-wise. Missing columns are skipped,
-    and missing values are treated as neutral (0.0).
-
-    Args:
-        panel: MultiIndex ``(cik, period)`` feature DataFrame.
-        proxy_columns: Candidate proxy columns expected from upstream layers.
-        output_col: Output score column name.
-
-    Returns:
-        New DataFrame containing ``output_col``.
-    """
+    """Build a deterministic Beneish-style fraud proxy from available features."""
 
     result = panel.copy()
-    available = [c for c in proxy_columns if c in result.columns]
+    weights = feature_weights or FRAUD_FEATURE_WEIGHTS
+
+    available = [column for column in weights if column in result.columns]
     if not available:
         result[output_col] = 0.0
         return result
 
-    result[output_col] = result[available].fillna(0.0).mean(axis=1)
+    weight_series = pd.Series({column: float(weights[column]) for column in available})
+    numerator = result[available].fillna(0.0).mul(weight_series, axis=1).sum(axis=1)
+    denominator = float(weight_series.abs().sum()) or 1.0
+
+    result[output_col] = numerator / denominator
     return result
+
+
+def compute_fraud_proxy_score(
+    panel: pd.DataFrame,
+    feature_weights: dict[str, float] | None = None,
+    output_col: str = "fraud_proxy_score",
+) -> pd.DataFrame:
+    """Backward-compatible alias for :func:`build_fraud_proxy_score`."""
+
+    return build_fraud_proxy_score(
+        panel=panel,
+        feature_weights=feature_weights,
+        output_col=output_col,
+    )
