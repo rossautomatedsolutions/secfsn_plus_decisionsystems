@@ -5,7 +5,10 @@ from secfsn_plus_decisionsystems.anomaly.statistical_outliers import (
     build_cross_sectional_z_anomaly,
     build_robust_mad_anomaly,
 )
-from secfsn_plus_decisionsystems.scoring.fraud_proxy_score import build_fraud_proxy_score
+from secfsn_plus_decisionsystems.scoring.fraud_proxy_score import (
+    build_fraud_proxy_score,
+    compute_fraud_proxy_score,
+)
 from secfsn_plus_decisionsystems.scoring.hybrid_score import HybridRiskConfig, build_hybrid_risk_score
 from secfsn_plus_decisionsystems.scoring.structural_risk_score import build_structural_risk_score
 from secfsn_plus_decisionsystems.screening.short_candidates import build_short_candidates
@@ -85,6 +88,20 @@ def test_missing_columns_are_handled_gracefully():
     assert "is_high_risk" in result.columns
     assert "is_medium_risk" in result.columns
     assert result["hybrid_risk_score"].notna().all()
+
+
+def test_compute_fraud_proxy_score_supports_legacy_proxy_columns_argument():
+    panel = _sample_panel()
+    columns = ("accrual_intensity", "non_cash_earnings_ratio")
+
+    result = compute_fraud_proxy_score(panel, columns)
+    expected = panel[list(columns)].mean(axis=1)
+
+    pd.testing.assert_series_equal(
+        result["fraud_proxy_score"],
+        expected,
+        check_names=False,
+    )
 
 
 def test_anomaly_builders_and_short_candidates_smoke():
