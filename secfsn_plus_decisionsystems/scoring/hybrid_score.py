@@ -5,6 +5,46 @@ from __future__ import annotations
 import pandas as pd
 
 
+def build_hybrid_risk_score(
+    panel: pd.DataFrame,
+    structural_col: str = "structural_risk_score",
+    fraud_col: str = "fraud_proxy_score",
+    model_col: str = "model_risk_probability",
+    anomaly_cols: tuple[str, ...] = (
+        "cross_sectional_z_anomaly_score",
+        "robust_mad_anomaly_score",
+        "rolling_instability_score",
+    ),
+    anomaly_weight: float = 0.25,
+    output_col: str = "hybrid_risk_score",
+) -> pd.DataFrame:
+    """Build deterministic hybrid risk score with optional anomaly contribution.
+
+    Base score is the mean of available structural/fraud/model components.
+    If anomaly magnitudes are present, their mean is blended in using
+    ``anomaly_weight`` to emphasize instability/outlier severity.
+    """
+
+    result = panel.copy()
+    base_cols = [c for c in (structural_col, fraud_col, model_col) if c in result.columns]
+
+    if base_cols:
+        base_score = result[base_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).mean(axis=1)
+    else:
+        base_score = pd.Series(0.0, index=result.index)
+
+    available_anomaly_cols = [c for c in anomaly_cols if c in result.columns]
+    if available_anomaly_cols:
+        anomaly_magnitude = (
+            result[available_anomaly_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).mean(axis=1)
+        )
+        result[output_col] = ((1.0 - anomaly_weight) * base_score) + (anomaly_weight * anomaly_magnitude)
+    else:
+        result[output_col] = base_score
+
+    return result
+
+
 def compute_hybrid_score(
     panel: pd.DataFrame,
     structural_col: str = "structural_risk_score",
@@ -12,27 +52,13 @@ def compute_hybrid_score(
     model_col: str = "model_risk_probability",
     output_col: str = "hybrid_decision_score",
 ) -> pd.DataFrame:
-    """Combine deterministic and optional model signals into one hybrid score.
+    """Backward-compatible wrapper for prior hybrid score naming."""
 
-    This function does not train or infer models. It only consumes columns if
-    they already exist in the incoming panel.
-
-    Args:
-        panel: MultiIndex ``(cik, period)`` feature DataFrame.
-        structural_col: Deterministic structural score column.
-        fraud_col: Deterministic fraud-proxy score column.
-        model_col: Optional Layer 3A model output column.
-        output_col: Output hybrid score column name.
-
-    Returns:
-        New DataFrame with ``output_col``.
-    """
-
-    result = panel.copy()
-    cols = [c for c in (structural_col, fraud_col, model_col) if c in result.columns]
-    if not cols:
-        result[output_col] = 0.0
-        return result
-
-    result[output_col] = result[cols].fillna(0.0).mean(axis=1)
+    result = build_hybrid_risk_score(
+        panel,
+        structural_col=structural_col,
+        fraud_col=fraud_col,
+        model_col=model_col,
+        output_col=output_col,
+    )
     return result
