@@ -5,6 +5,20 @@ from __future__ import annotations
 import pandas as pd
 
 
+def _compute_base_score(
+    panel: pd.DataFrame,
+    structural_col: str,
+    fraud_col: str,
+    model_col: str,
+) -> pd.Series:
+    """Compute base deterministic score from available primary risk columns."""
+
+    base_cols = [c for c in (structural_col, fraud_col, model_col) if c in panel.columns]
+    if not base_cols:
+        return pd.Series(0.0, index=panel.index)
+    return panel[base_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).mean(axis=1)
+
+
 def _clamp_weight(weight: float) -> float:
     """Clamp blend weights into [0, 1] for deterministic composition."""
 
@@ -24,20 +38,10 @@ def build_hybrid_risk_score(
     anomaly_weight: float = 0.25,
     output_col: str = "hybrid_risk_score",
 ) -> pd.DataFrame:
-    """Build deterministic hybrid risk score with optional anomaly contribution.
-
-    Base score is the mean of available structural/fraud/model components.
-    If anomaly magnitudes are present, their mean is blended in using
-    ``anomaly_weight`` to emphasize instability/outlier severity.
-    """
+    """Build deterministic hybrid risk score with optional anomaly contribution."""
 
     result = panel.copy()
-    base_cols = [c for c in (structural_col, fraud_col, model_col) if c in result.columns]
-
-    if base_cols:
-        base_score = result[base_cols].apply(pd.to_numeric, errors="coerce").fillna(0.0).mean(axis=1)
-    else:
-        base_score = pd.Series(0.0, index=result.index)
+    base_score = _compute_base_score(result, structural_col, fraud_col, model_col)
 
     weight = _clamp_weight(anomaly_weight)
     available_anomaly_cols = [c for c in anomaly_cols if c in result.columns]
@@ -59,13 +63,8 @@ def compute_hybrid_score(
     model_col: str = "model_risk_probability",
     output_col: str = "hybrid_decision_score",
 ) -> pd.DataFrame:
-    """Backward-compatible wrapper for prior hybrid score naming."""
+    """Backward-compatible wrapper that keeps legacy base hybrid behavior."""
 
-    result = build_hybrid_risk_score(
-        panel,
-        structural_col=structural_col,
-        fraud_col=fraud_col,
-        model_col=model_col,
-        output_col=output_col,
-    )
+    result = panel.copy()
+    result[output_col] = _compute_base_score(result, structural_col, fraud_col, model_col)
     return result
