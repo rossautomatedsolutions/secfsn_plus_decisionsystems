@@ -1,6 +1,9 @@
 import pandas as pd
 
-from secfsn_plus_decisionsystems.anomaly.rolling_instability import build_rolling_instability_score
+from secfsn_plus_decisionsystems.anomaly.rolling_instability import (
+    build_rolling_instability_score,
+    compute_rolling_instability,
+)
 from secfsn_plus_decisionsystems.anomaly.statistical_outliers import (
     build_cross_sectional_z_anomaly,
     build_robust_mad_anomaly,
@@ -144,3 +147,22 @@ def test_anomaly_builders_and_short_candidates_smoke():
     assert not ranked.empty
     assert len(ranked) == 2
     assert ranked["hybrid_risk_score"].is_monotonic_decreasing
+
+
+def test_compute_rolling_instability_restores_public_flag_when_missing():
+    panel = _sample_panel()
+
+    result = compute_rolling_instability(panel, value_col="structural_drift_1q", window=2)
+
+    assert "is_rolling_instability" in result.columns
+    assert result["is_rolling_instability"].dtype == bool
+
+
+def test_compute_rolling_instability_preserves_existing_public_flag():
+    panel = _sample_panel()
+    panel["is_rolling_instability"] = True
+
+    result = compute_rolling_instability(panel, value_col="structural_drift_1q", window=2)
+
+    assert "is_rolling_instability" in result.columns
+    assert result["is_rolling_instability"].all()
