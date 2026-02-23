@@ -35,3 +35,32 @@ def test_run_decision_engine_preserves_legacy_instability_output_for_put_screeni
     screened = screen_put_candidates(result, min_instability=0.01)
 
     assert not screened.empty
+
+
+def test_run_decision_engine_keeps_component_rolling_instability_flag():
+    panel = _engine_panel()
+
+    result = run_decision_engine(panel)
+
+    expected_flag = panel.copy()
+    expected_flag = expected_flag.assign(
+        hybrid_decision_score=(
+            expected_flag["structural_risk_score"]
+            + expected_flag["fraud_proxy_score"]
+            + expected_flag["model_risk_probability"]
+        )
+        / 3.0
+    )
+
+    from secfsn_plus_decisionsystems.anomaly.rolling_instability import build_rolling_instability_score
+
+    expected_flag = build_rolling_instability_score(
+        expected_flag,
+        columns=("structural_risk_score", "fraud_proxy_score", "model_risk_probability"),
+    )
+
+    pd.testing.assert_series_equal(
+        result["is_rolling_instability"],
+        expected_flag["is_rolling_instability"],
+        check_names=False,
+    )
