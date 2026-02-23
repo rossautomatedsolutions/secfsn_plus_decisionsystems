@@ -60,6 +60,8 @@ def compute_rolling_instability(
 ) -> pd.DataFrame:
     """Backward-compatible wrapper for single-column rolling instability metric."""
 
+    public_flag_col = "is_rolling_instability"
+    had_public_flag = public_flag_col in panel.columns
     legacy_flag_col = "_legacy_is_rolling_instability"
     result = build_rolling_instability_score(
         panel,
@@ -68,5 +70,7 @@ def compute_rolling_instability(
         magnitude_col=output_col,
         flag_col=legacy_flag_col,
     )
+    if not had_public_flag and legacy_flag_col in result.columns:
+        result[public_flag_col] = result[legacy_flag_col]
     result = result.drop(columns=[legacy_flag_col], errors="ignore")
     return result
