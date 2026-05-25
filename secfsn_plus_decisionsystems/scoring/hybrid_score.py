@@ -23,7 +23,8 @@ class HybridRiskConfig:
     medium_risk_threshold: float | None = None
     structural_col: str = "structural_risk_score"
     fraud_col: str = "fraud_proxy_score"
-    model_drawdown_col: str = "model_drawdown_probability"
+    model_risk_col: str = "model_risk_probability"
+    model_drawdown_col: str | None = "model_drawdown_probability"
     hybrid_col: str = "hybrid_risk_score"
     percentile_col: str = "hybrid_risk_percentile"
     high_flag_col: str = "is_high_risk"
@@ -33,6 +34,14 @@ class HybridRiskConfig:
         "robust_mad_anomaly_magnitude",
         "rolling_instability_magnitude",
     )
+
+
+def _resolve_model_risk_col(panel: pd.DataFrame, cfg: HybridRiskConfig) -> str | None:
+    if cfg.model_risk_col in panel.columns:
+        return cfg.model_risk_col
+    if cfg.model_drawdown_col and cfg.model_drawdown_col in panel.columns:
+        return cfg.model_drawdown_col
+    return None
 
 
 def build_hybrid_risk_score(
@@ -55,9 +64,10 @@ def build_hybrid_risk_score(
     if cfg.fraud_col in result.columns:
         components.append(cfg.fraud_col)
         component_weights[cfg.fraud_col] = cfg.fraud_weight
-    if cfg.model_drawdown_col in result.columns:
-        components.append(cfg.model_drawdown_col)
-        component_weights[cfg.model_drawdown_col] = cfg.model_drawdown_weight
+    model_risk_col = _resolve_model_risk_col(result, cfg)
+    if model_risk_col is not None:
+        components.append(model_risk_col)
+        component_weights[model_risk_col] = cfg.model_drawdown_weight
 
     available_anomaly_cols = [column for column in cfg.anomaly_magnitude_cols if column in result.columns]
     if available_anomaly_cols and cfg.anomaly_weight != 0.0:

@@ -5,6 +5,14 @@ from __future__ import annotations
 import pandas as pd
 
 
+def _resolve_risk_col(panel: pd.DataFrame, risk_col: str) -> str | None:
+    if risk_col in panel.columns:
+        return risk_col
+    if risk_col == "hybrid_risk_score" and "hybrid_decision_score" in panel.columns:
+        return "hybrid_decision_score"
+    return None
+
+
 def build_short_candidates(
     panel: pd.DataFrame,
     top_n: int,
@@ -45,7 +53,8 @@ def build_short_candidates(
 
 def screen_short_candidates(
     panel: pd.DataFrame,
-    risk_col: str = "hybrid_decision_score",
+    risk_col: str = "hybrid_risk_score",
+    allowed_col: str | None = "short_allowed",
     min_risk: float = 0.7,
 ) -> pd.DataFrame:
     """Return rows that satisfy deterministic short-candidate criteria.
@@ -53,6 +62,9 @@ def screen_short_candidates(
     Missing ``risk_col`` returns an empty DataFrame with original columns.
     """
 
-    if risk_col not in panel.columns:
+    if allowed_col is not None and allowed_col in panel.columns:
+        return panel.loc[panel[allowed_col].fillna(False).astype(bool)].copy()
+    resolved_risk_col = _resolve_risk_col(panel, risk_col)
+    if resolved_risk_col is None:
         return panel.iloc[0:0].copy()
-    return panel.loc[panel[risk_col].fillna(float("-inf")).ge(min_risk)].copy()
+    return panel.loc[panel[resolved_risk_col].fillna(float("-inf")).ge(min_risk)].copy()

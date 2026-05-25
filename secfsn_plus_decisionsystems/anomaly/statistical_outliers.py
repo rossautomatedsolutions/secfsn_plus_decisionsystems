@@ -4,14 +4,15 @@ from __future__ import annotations
 
 import pandas as pd
 
+from secfsn_plus_decisionsystems._panel_utils import validate_panel_index
+
 
 _CROSS_SECTIONAL_THRESHOLD = 3.0
 _ROBUST_SCALE_FACTOR = 0.6745
 
 
 def _validate_panel(panel: pd.DataFrame) -> None:
-    if not isinstance(panel.index, pd.MultiIndex) or panel.index.nlevels < 2:
-        raise ValueError("panel must be indexed by a (cik, period) MultiIndex")
+    validate_panel_index(panel)
 
 
 def _ensure_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:

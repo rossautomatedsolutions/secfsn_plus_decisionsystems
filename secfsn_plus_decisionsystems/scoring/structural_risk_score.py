@@ -26,10 +26,12 @@ def build_structural_risk_score(
     """
 
     result = panel.copy()
-    weights = feature_weights or STRUCTURAL_FEATURE_WEIGHTS
+    weights = STRUCTURAL_FEATURE_WEIGHTS if feature_weights is None else feature_weights
 
     available = [column for column in weights if column in result.columns]
     if not available:
+        if output_col in result.columns:
+            return result
         result[output_col] = 0.0
         return result
 

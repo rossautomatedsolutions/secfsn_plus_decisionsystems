@@ -14,3 +14,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["secfsn_plus_decisionsystems*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+addopts = "-p no:cacheprovider"

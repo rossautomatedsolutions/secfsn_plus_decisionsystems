@@ -93,6 +93,55 @@ def test_missing_columns_are_handled_gracefully():
     assert result["hybrid_risk_score"].notna().all()
 
 
+def test_hybrid_risk_config_prefers_canonical_model_risk_column():
+    panel = _sample_panel().rename(columns={"model_drawdown_probability": "model_risk_probability"})
+    panel["model_drawdown_probability"] = 0.0
+
+    result = build_hybrid_risk_score(
+        panel,
+        HybridRiskConfig(
+            structural_weight=0.0,
+            fraud_weight=0.0,
+            model_drawdown_weight=1.0,
+        ),
+    )
+
+    pd.testing.assert_series_equal(
+        result["hybrid_risk_score"],
+        panel["model_risk_probability"],
+        check_names=False,
+    )
+
+
+def test_hybrid_risk_config_supports_legacy_model_drawdown_alias_when_canonical_missing():
+    panel = _sample_panel()
+
+    result = build_hybrid_risk_score(
+        panel,
+        HybridRiskConfig(
+            structural_weight=0.0,
+            fraud_weight=0.0,
+            model_drawdown_weight=1.0,
+        ),
+    )
+
+    pd.testing.assert_series_equal(
+        result["hybrid_risk_score"],
+        panel["model_drawdown_probability"],
+        check_names=False,
+    )
+
+
+def test_empty_weight_configuration_is_respected():
+    panel = _sample_panel()
+
+    structural = build_structural_risk_score(panel, feature_weights={})
+    fraud = build_fraud_proxy_score(panel, feature_weights={})
+
+    assert structural["structural_risk_score"].eq(0.0).all()
+    assert fraud["fraud_proxy_score"].eq(0.0).all()
+
+
 def test_compute_fraud_proxy_score_supports_legacy_proxy_columns_argument():
     panel = _sample_panel()
     columns = ("accrual_intensity", "non_cash_earnings_ratio")
@@ -147,6 +196,33 @@ def test_anomaly_builders_and_short_candidates_smoke():
     assert not ranked.empty
     assert len(ranked) == 2
     assert ranked["hybrid_risk_score"].is_monotonic_decreasing
+
+
+def test_obvious_cross_sectional_outlier_is_detected():
+    index = pd.MultiIndex.from_tuples(
+        [
+            ("1001", "2024Q1"),
+            ("1002", "2024Q1"),
+            ("1003", "2024Q1"),
+            ("1004", "2024Q1"),
+        ],
+        names=["cik", "period"],
+    )
+    panel = pd.DataFrame(
+        {
+            "equity_ni_residual_scaled": [0.0, 0.1, 0.0, 100.0],
+        },
+        index=index,
+    )
+
+    result = build_robust_mad_anomaly(
+        panel,
+        columns=("equity_ni_residual_scaled",),
+        threshold=3.0,
+    )
+
+    assert result.loc[("1004", "2024Q1"), "is_robust_mad_anomaly"]
+    assert not result.loc[("1001", "2024Q1"), "is_robust_mad_anomaly"]
 
 
 def test_compute_rolling_instability_restores_public_flag_when_missing():

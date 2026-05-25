@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pandas as pd
 
+from secfsn_plus_decisionsystems._panel_utils import sort_panel_by_cik_period
+
 
 def apply_persistence_flag(
     panel: pd.DataFrame,
@@ -16,13 +18,14 @@ def apply_persistence_flag(
     Uses per-``cik`` cumulative streak counting in a fully vectorized manner.
     """
 
-    result = panel.copy()
+    original_index = panel.index
+    result = sort_panel_by_cik_period(panel)
     if flag_col not in result.columns:
         result[output_col] = False
-        return result
+        return result.reindex(original_index)
 
     mask = result[flag_col].fillna(False).astype(bool)
     g = mask.groupby(level=0)
     streak = g.cumsum() - g.cumsum().where(~mask).ffill().fillna(0).astype(int)
     result[output_col] = streak.ge(min_consecutive)
-    return result
+    return result.reindex(original_index)
