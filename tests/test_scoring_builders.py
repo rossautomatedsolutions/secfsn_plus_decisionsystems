@@ -1,4 +1,5 @@
 import pandas as pd
+from pandas.api.types import is_bool_dtype, is_numeric_dtype
 
 from secfsn_plus_decisionsystems.anomaly.rolling_instability import (
     build_rolling_instability_score,
@@ -223,6 +224,54 @@ def test_obvious_cross_sectional_outlier_is_detected():
 
     assert result.loc[("1004", "2024Q1"), "is_robust_mad_anomaly"]
     assert not result.loc[("1001", "2024Q1"), "is_robust_mad_anomaly"]
+
+
+def test_cross_sectional_z_anomaly_output_remains_numeric():
+    panel = _sample_panel()
+    panel.loc[(1001, "2024Q1"), "equity_ni_residual_scaled"] = None
+
+    result = build_cross_sectional_z_anomaly(
+        panel,
+        columns=("equity_ni_residual_scaled", "cash_vs_earnings_gap_scaled"),
+        threshold=1.0,
+    )
+
+    assert is_numeric_dtype(result["cross_sectional_z_anomaly_magnitude"])
+    assert is_bool_dtype(result["is_cross_sectional_z_anomaly"])
+    assert result["cross_sectional_z_anomaly_magnitude"].notna().all()
+
+
+def test_robust_mad_anomaly_output_remains_numeric():
+    panel = _sample_panel()
+    panel.loc[(1002, "2024Q2"), "cash_vs_earnings_gap_scaled"] = None
+
+    result = build_robust_mad_anomaly(
+        panel,
+        columns=("equity_ni_residual_scaled", "cash_vs_earnings_gap_scaled"),
+        threshold=1.0,
+    )
+
+    assert is_numeric_dtype(result["robust_mad_anomaly_magnitude"])
+    assert is_bool_dtype(result["is_robust_mad_anomaly"])
+    assert result["robust_mad_anomaly_magnitude"].notna().all()
+
+
+def test_statistical_outlier_builders_handle_missing_columns_gracefully():
+    panel = _sample_panel()[["accrual_intensity"]]
+
+    z_result = build_cross_sectional_z_anomaly(
+        panel,
+        columns=("equity_ni_residual_scaled",),
+    )
+    robust_result = build_robust_mad_anomaly(
+        panel,
+        columns=("cash_vs_earnings_gap_scaled",),
+    )
+
+    assert z_result["cross_sectional_z_anomaly_magnitude"].eq(0.0).all()
+    assert robust_result["robust_mad_anomaly_magnitude"].eq(0.0).all()
+    assert not z_result["is_cross_sectional_z_anomaly"].any()
+    assert not robust_result["is_robust_mad_anomaly"].any()
 
 
 def test_compute_rolling_instability_restores_public_flag_when_missing():

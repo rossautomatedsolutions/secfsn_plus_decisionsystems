@@ -134,6 +134,12 @@ A repo-level smoke example is also available at
 to demonstrate a small realistic prepared panel flowing through the decision
 engine without raw SEC loading or model training.
 
+## Current validation status
+
+- synthetic integration smoke test passes
+- production/main-machine clone validated
+- real-data integration remains a future milestone
+
 ## Extension guidance
 
 Current modules are stubs with clear extension points and full docstrings.

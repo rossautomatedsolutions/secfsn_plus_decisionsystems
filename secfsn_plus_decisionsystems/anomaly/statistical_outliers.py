@@ -19,6 +19,12 @@ def _ensure_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
     return df[columns].apply(pd.to_numeric, errors="coerce")
 
 
+def _fill_numeric_missing(df: pd.DataFrame) -> pd.DataFrame:
+    """Preserve float-backed numeric outputs while replacing missing scores with zeros."""
+
+    return df.astype("float64").fillna(0.0)
+
+
 def build_cross_sectional_z_anomaly(
     panel: pd.DataFrame,
     columns: tuple[str, ...] | list[str],
@@ -38,8 +44,8 @@ def build_cross_sectional_z_anomaly(
 
     values = _ensure_numeric(result, available)
     period_mean = values.groupby(level=1).transform("mean")
-    period_std = values.groupby(level=1).transform(lambda s: s.std(ddof=0)).replace(0.0, pd.NA)
-    z_scores = ((values - period_mean) / period_std).fillna(0.0)
+    period_std = values.groupby(level=1).transform(lambda s: s.std(ddof=0)).mask(lambda df: df.eq(0.0))
+    z_scores = _fill_numeric_missing((values - period_mean) / period_std)
 
     abs_z = z_scores.abs()
     result[magnitude_col] = abs_z.max(axis=1)
@@ -67,8 +73,8 @@ def build_robust_mad_anomaly(
     values = _ensure_numeric(result, available)
     period_median = values.groupby(level=1).transform("median")
     abs_dev = (values - period_median).abs()
-    period_mad = abs_dev.groupby(level=1).transform("median").replace(0.0, pd.NA)
-    robust_scores = ((_ROBUST_SCALE_FACTOR * (values - period_median)) / period_mad).fillna(0.0)
+    period_mad = abs_dev.groupby(level=1).transform("median").mask(lambda df: df.eq(0.0))
+    robust_scores = _fill_numeric_missing((_ROBUST_SCALE_FACTOR * (values - period_median)) / period_mad)
 
     abs_robust = robust_scores.abs()
     result[magnitude_col] = abs_robust.max(axis=1)
