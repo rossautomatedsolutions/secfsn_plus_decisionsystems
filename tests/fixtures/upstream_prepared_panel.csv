@@ -1,0 +1,5 @@
+cik,period,equity_ni_residual_scaled,cash_vs_earnings_gap_scaled,accrual_intensity,structural_drift_1q,margin_volatility_4q,balance_sheet_identity_residual_scaled,retained_earnings_gap_proxy_scaled
+1001,2024Q1,0.06,0.08,0.09,0.05,0.07,0.04,0.05
+1001,2024Q2,0.09,0.11,0.12,0.07,0.08,0.05,0.06
+2002,2024Q1,0.48,0.52,0.58,0.50,0.47,0.44,0.41
+2002,2024Q2,0.83,0.86,0.88,0.84,0.82,0.80,0.77
