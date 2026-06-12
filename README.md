@@ -134,6 +134,14 @@ A repo-level smoke example is also available at
 to demonstrate a small realistic prepared panel flowing through the decision
 engine without raw SEC loading or model training.
 
+A tiny 2-minute demo walkthrough for short screen recordings is available at
+[`examples/stage04_demo_walkthrough.py`](C:/GitHub/secfsn_plus_decisionsystems/examples/stage04_demo_walkthrough.py).
+Run it with:
+
+```powershell
+python examples\stage04_demo_walkthrough.py
+```
+
 ## Current validation status
 
 - synthetic integration smoke test passes
