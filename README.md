@@ -2,11 +2,11 @@
 
 `secfsn_plus_decisionsystems` is **SECFSN 05 / Layer 3B** in a modular quantitative research stack:
 
-1. Layer 1: `secfsn`
-2. Layer 2: `secfsn_plus`
-3. Layer 2.5: `secfsn_plus_structural`
-4. Layer 3A: `secfsn_plus_models`
-5. Layer 3B: `secfsn_plus_decisionsystems` (this repository)
+1. SECFSN 01 / Layer 1: `secfsn` — normalized SEC financial-statement facts
+2. SECFSN 02 / Layer 2: `secfsn_plus` — derived financial features and analytical enrichment
+3. SECFSN 03 / Layer 2.5: `secfsn_plus_structural` — structural accounting and filing-pattern evidence
+4. SECFSN 04 / Layer 3A: `secfsn_plus_models` — model-derived evidence and validated model-output contracts
+5. SECFSN 05 / Layer 3B: `secfsn_plus_decisionsystems` (this repository) — governed decision outputs
 
 ## Architectural role
 
@@ -16,7 +16,7 @@ This repository provides deterministic, rules-based decision functionality:
 - anomaly/outlier and instability detection
 - threshold/persistence risk flags
 - screening outputs for short, put, and risk-filtered long candidates
-- optional consumption of model outputs produced upstream by Layer 3A
+- optional consumption of model-derived evidence produced upstream by SECFSN 04 / Layer 3A
 
 ## Upstream/downstream contract
 
@@ -29,7 +29,14 @@ All public functions expect a `pandas.DataFrame` indexed by a MultiIndex:
 - `period` format: `YYYYQ#`
 - `cik` should be treated as a string identifier even when stored numerically
 
-The panel should already be prepared by upstream layers. This repo:
+The panel should already reflect the available SECFSN 01–04 upstream analytical stack:
+
+- SECFSN 01 normalized SEC financial-statement data
+- SECFSN 02 derived financial features and analytical enrichment
+- SECFSN 03 structural accounting and filing-pattern evidence
+- optional SECFSN 04 model-derived evidence under a validated output contract
+
+SECFSN 05 consumes that available evidence. This repo:
 
 - **does not** parse SEC filings
 - **does not** perform raw wrangling
@@ -65,8 +72,8 @@ layers that require transparent, reproducible decision signals.
 
 This repository intentionally excludes model training logic.
 
-- Allowed: consume existing model outputs (for example, a column like
-  `model_risk_probability`) and combine them deterministically.
+- Allowed: consume SECFSN 04 model-derived evidence (for example, a column like
+  `model_risk_probability`) under the documented deterministic contract.
 - Not allowed: fit models, tune hyperparameters, derive upstream features, or
   run non-deterministic learning pipelines.
 
@@ -134,8 +141,9 @@ A repo-level smoke example is also available at
 to demonstrate a small realistic prepared panel flowing through the decision
 engine without raw SEC loading or model training.
 
-A tiny decision-systems walkthrough for short screen recordings is available at
+A legacy-named decision-systems walkthrough for short screen recordings is available at
 [`examples/stage04_demo_walkthrough.py`](C:/GitHub/secfsn_plus_decisionsystems/examples/stage04_demo_walkthrough.py).
+Its filename predates the SECFSN 05 naming convention; it is not an SECFSN 04 demo.
 Run it with:
 
 ```powershell
@@ -160,9 +168,11 @@ Launch the recording-ready notebook with:
 jupyter notebook notebooks\05_secfsn_plus_decisionsystems_demo.ipynb
 ```
 
-The demo uses only the committed synthetic fixture at
+The demo uses only the committed synthetic SECFSN 05 fixture at
 `tests/fixtures/upstream_prepared_panel.csv`; it does not require network access,
-credentials, real SEC data, or a trained-model artifact. For a clean execution
+credentials, real SEC data, or an actual SECFSN 04 trained-model artifact. SECFSN 04
+is a supported upstream model-evidence source, but its missing fixture artifact is
+displayed explicitly and never fabricated or silently weighted. For a clean execution
 check that saves displayed outputs in place, run:
 
 ```powershell
