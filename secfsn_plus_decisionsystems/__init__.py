@@ -1,11 +1,12 @@
-"""Top-level package for deterministic decision logic on SECFSN+ feature panels.
+"""SECFSN 05 / Layer 3B deterministic decision logic.
 
-This package is intentionally limited to **Layer 3B** responsibilities:
+``secfsn_plus_decisionsystems`` consumes available evidence from the SECFSN
+01–04 upstream stack and owns the governed decision-system responsibilities:
 
 - deterministic scoring from prepared feature panels
 - anomaly and instability diagnostics
 - rules-based risk flags and screening outputs
-- optional consumption of model outputs from Layer 3A
+- optional consumption of SECFSN 04 / Layer 3A model-derived evidence
 
 It explicitly excludes SEC parsing, ratio engineering, and model training.
 """

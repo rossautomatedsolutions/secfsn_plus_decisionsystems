@@ -66,7 +66,7 @@ def test_run_decision_engine_returns_required_columns():
     assert result.index.equals(panel.index)
 
 
-def test_canonical_stage04_path_merges_optional_layer3a_outputs_before_decision_engine():
+def test_canonical_secfsn05_path_merges_optional_secfsn04_outputs_before_decision_engine():
     index = pd.MultiIndex.from_tuples(
         [
             ("1001", "2024Q1"),
@@ -100,7 +100,7 @@ def test_canonical_stage04_path_merges_optional_layer3a_outputs_before_decision_
     assert result.loc[("1002", "2024Q1"), "hybrid_risk_score"] > result.loc[("1001", "2024Q1"), "hybrid_risk_score"]
 
 
-def test_realistic_upstream_fixture_adapts_to_stage04_contract():
+def test_realistic_upstream_fixture_adapts_to_secfsn05_contract():
     fixture = pd.read_csv(FIXTURE_DIR / "upstream_prepared_panel.csv", dtype={"cik": str, "period": str})
     prepared_panel = fixture.set_index(["cik", "period"]).sort_index()
     model_outputs = pd.DataFrame(
@@ -142,7 +142,7 @@ def test_realistic_upstream_fixture_adapts_to_stage04_contract():
     assert result[core_decision_columns].notna().all().all()
 
 
-def test_unsorted_upstream_fixture_preserves_stage04_keys_and_outputs():
+def test_unsorted_upstream_fixture_preserves_secfsn05_keys_and_outputs():
     fixture = pd.read_csv(FIXTURE_DIR / "upstream_prepared_panel.csv", dtype={"cik": str, "period": str})
     unsorted_fixture = fixture.iloc[[2, 0, 3, 1]].reset_index(drop=True)
     prepared_panel = unsorted_fixture.set_index(["cik", "period"])

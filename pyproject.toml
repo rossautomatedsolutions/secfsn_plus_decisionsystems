@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "secfsn_plus_decisionsystems"
 version = "0.1.0"
-description = "Layer 3B deterministic scoring, anomaly detection, and decision logic."
+description = "SECFSN 05 / Layer 3B deterministic scoring, anomaly detection, and governed decision logic."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

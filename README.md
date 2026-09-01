@@ -136,19 +136,15 @@ print(
 )
 ```
 
-A repo-level smoke example is also available at
-[`examples/integration_smoke.py`](C:/GitHub_Review_Folder/secfsn_plus_decisionsystems/examples/integration_smoke.py)
+A repo-level smoke example is also available at `examples/integration_smoke.py`
 to demonstrate a small realistic prepared panel flowing through the decision
 engine without raw SEC loading or model training.
 
-A legacy-named decision-systems walkthrough for short screen recordings is available at
-[`examples/stage04_demo_walkthrough.py`](C:/GitHub/secfsn_plus_decisionsystems/examples/stage04_demo_walkthrough.py).
-Its filename predates the SECFSN 05 naming convention; it is not an SECFSN 04 demo.
-Run it with:
-
-```powershell
-python examples\stage04_demo_walkthrough.py
-```
+The canonical SECFSN 05 recording materials are the
+[`notebooks/05_secfsn_plus_decisionsystems_demo.ipynb`](notebooks/05_secfsn_plus_decisionsystems_demo.ipynb)
+notebook and its aligned
+[`docs/05_secfsn_plus_decisionsystems_demo_script.md`](docs/05_secfsn_plus_decisionsystems_demo_script.md)
+narration script.
 
 ## Running the SECFSN 05 demo
 

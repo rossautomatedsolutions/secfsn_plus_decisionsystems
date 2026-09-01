@@ -1,4 +1,4 @@
-"""Tiny Stage 04 demo walkthrough for a short screen recording."""
+"""Tiny SECFSN 05 / Layer 3B walkthrough for a short screen recording."""
 
 from __future__ import annotations
 
@@ -32,14 +32,14 @@ PREVIEW_COLUMNS: tuple[str, ...] = (
 
 
 def load_prepared_panel() -> pd.DataFrame:
-    """Load the committed upstream-shaped fixture and enforce the Stage 04 index."""
+    """Load the committed upstream-shaped fixture and enforce the SECFSN 05 index."""
 
     fixture = pd.read_csv(FIXTURE_PATH, dtype={"cik": str, "period": str})
     return fixture.set_index(["cik", "period"]).sort_index()
 
 
 def build_partial_model_outputs(panel: pd.DataFrame) -> pd.DataFrame:
-    """Return a tiny optional Layer 3A-style frame with partial coverage only."""
+    """Return a tiny optional SECFSN 04 / Layer 3A frame with partial coverage."""
 
     covered_index = pd.MultiIndex.from_tuples(
         [("1001", "2024Q2"), ("2002", "2024Q2")],
@@ -68,12 +68,12 @@ def format_prepared_panel_preview(panel: pd.DataFrame) -> pd.DataFrame:
 
 
 def main() -> None:
-    """Walk through deterministic-only and optional-model Stage 04 usage."""
+    """Walk through deterministic-only and optional-model SECFSN 05 usage."""
 
-    print("Stage 04 demo: prepared panel -> optional model bridge -> decision engine")
+    print("SECFSN 05 demo: prepared panel -> optional model bridge -> decision engine")
     print()
-    print("Stages 01-03 live upstream and produce the prepared panel plus optional model outputs.")
-    print("Stage 04 consumes those inputs without retraining or rewriting upstream logic.")
+    print("SECFSN 01-04 live upstream and provide prepared evidence plus optional model outputs.")
+    print("SECFSN 05 consumes available evidence without retraining or rewriting upstream logic.")
     print()
 
     prepared_panel = load_prepared_panel()
@@ -87,20 +87,20 @@ def main() -> None:
     print()
 
     deterministic_only = run_decision_engine(prepared_panel)
-    print("2. Run deterministic-only Stage 04")
-    print("   model_risk_probability is optional; Stage 04 still runs when it is absent.")
+    print("2. Run deterministic-only SECFSN 05")
+    print("   model_risk_probability is optional; SECFSN 05 still runs when it is absent.")
     print(format_final_table(deterministic_only).to_string())
     print()
 
     model_outputs = build_partial_model_outputs(prepared_panel)
-    print("3. Add a tiny optional model output frame")
+    print("3. Add a tiny optional SECFSN 04 model-output frame")
     print("   Partial model coverage is allowed; uncovered rows simply keep null model risk values.")
     print(model_outputs.to_string())
     print()
 
     merged = merge_model_outputs(prepared_panel, model_outputs)
     with_optional_model = run_decision_engine(merged)
-    print("4. Merge model outputs, then run the same Stage 04 engine")
+    print("4. Merge model outputs, then run the same SECFSN 05 engine")
     print("   Output remains keyed by the same (cik, period) MultiIndex.")
     print(format_final_table(with_optional_model).to_string())
 
