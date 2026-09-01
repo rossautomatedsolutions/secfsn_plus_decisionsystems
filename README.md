@@ -1,6 +1,6 @@
-# secfsn_plus_decisionsystems
+# secfsn_plus_decisionsystems — SECFSN 05 / Layer 3B
 
-`secfsn_plus_decisionsystems` is **Layer 3B** in a modular quantitative research stack:
+`secfsn_plus_decisionsystems` is **SECFSN 05 / Layer 3B** in a modular quantitative research stack:
 
 1. Layer 1: `secfsn`
 2. Layer 2: `secfsn_plus`
@@ -134,12 +134,39 @@ A repo-level smoke example is also available at
 to demonstrate a small realistic prepared panel flowing through the decision
 engine without raw SEC loading or model training.
 
-A tiny 2-minute demo walkthrough for short screen recordings is available at
+A tiny decision-systems walkthrough for short screen recordings is available at
 [`examples/stage04_demo_walkthrough.py`](C:/GitHub/secfsn_plus_decisionsystems/examples/stage04_demo_walkthrough.py).
 Run it with:
 
 ```powershell
 python examples\stage04_demo_walkthrough.py
+```
+
+## Running the SECFSN 05 demo
+
+From the repository root, create an environment with Python 3.10 or newer and
+install the package plus Jupyter's notebook launcher:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e . notebook
+```
+
+Launch the recording-ready notebook with:
+
+```powershell
+jupyter notebook notebooks\05_secfsn_plus_decisionsystems_demo.ipynb
+```
+
+The demo uses only the committed synthetic fixture at
+`tests/fixtures/upstream_prepared_panel.csv`; it does not require network access,
+credentials, real SEC data, or a trained-model artifact. For a clean execution
+check that saves displayed outputs in place, run:
+
+```powershell
+jupyter nbconvert --to notebook --execute --inplace notebooks\05_secfsn_plus_decisionsystems_demo.ipynb
 ```
 
 ## Current validation status
